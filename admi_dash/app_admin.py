@@ -17,7 +17,7 @@ from modules.configurations import configurationsTabs
 
 
 components = configurationsTabs().components
-menus=['Registro']
+menus=['Web','Base de datos']
 myReader = apiReader()
 myDrawer = stetic()
 myBuilder = BuilderDash()
@@ -110,8 +110,11 @@ def update_piker(start_date, end_date, pathname):
     from two acquired dates, it generates a series of menus with the data extracted from the APIs, they are called in the function getData() linea 117
     '''
     try:
+        mytabs=[]
         global data # contiene tanto los datos unicos por paciente como la tabla
-        if pathname != '/': #posteriomente lo validamos
+        if pathname == '/': #posteriomente lo validamos
+            return tuple([[html.P(),dbc.Alert("No hay información por mostrar, completa el menú de filtros", color="primary")]])
+        else:
             country=pathname.split('/')[-2]
             keyword=pathname.split('/')[-1]
             # obtenemos las coordenadas dando pais
@@ -119,10 +122,9 @@ def update_piker(start_date, end_date, pathname):
             df= myReader.getData(loc=loc, keyword=keyword, start=start_date, end=end_date)
             salary,description= myReader.getApi(keyword=keyword,country=country)
             data=[df,salary,keyword,description]
-        else:
-            data=[[],[],[],[]]
             
-        mytabs=[]
+            
+        
         ids=[v[1][1] for v in components.values()]
         for i in myDrawer.chooseOutputs(components=components):
             if i.component_id == ids[0]:
@@ -137,6 +139,7 @@ def update_piker(start_date, end_date, pathname):
     
     except Exception as ex:
         print(ex)
+        return tuple([[html.P(),dbc.Alert("No hay información por mostrar, completa el menú de filtros", color="primary")]])
 
 
 # Requests
@@ -144,7 +147,17 @@ def update_piker(start_date, end_date, pathname):
     Output("download"+'MyBtn1', "data"),
     dash.dependencies.Input("MyBtn1", "n_clicks"),
     prevent_initial_call=True,)
-def funcPatient(n_clicks):
+def funcRegistro(n_clicks):
     ''' This function detects when clicking, to activate the csv file download item '''
     file = dcc.send_data_frame(data[1].to_excel, "Datoss.csv")
+    return file
+
+# Requests
+@app.callback(
+    Output("download"+'MyBtn2', "data"),
+    dash.dependencies.Input("MyBtn2", "n_clicks"),
+    prevent_initial_call=True,)
+def funcRegistro2(n_clicks):
+    ''' This function detects when clicking, to activate the csv file download item '''
+    file = dcc.send_data_frame(data[3].to_excel, "Datoss.csv")
     return file

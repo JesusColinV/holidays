@@ -21,15 +21,15 @@ def getCard(**kwargs):
     cards = myBuilder.GphCards(
                     pos11=myBuilder.makeTopCard(
                         text_k='Salario en:',
-                        value_k=keyword,
+                        value_k=keyword.replace('+',' '),
                         ),
                     pos12=myBuilder.makeTopCard(
                         text_k='Salario mínimo',
-                        value_k=salary['minimo'],
+                        value_k=int(salary['minimo']),
                         ),
                     pos13=myBuilder.makeTopCard(
                         text_k='Salario máximo',
-                        value_k=salary['maximo'],
+                        value_k=int(salary['maximo']),
                         ),
                     pos21=myBuilder.makeGraph(
                         df=df,
@@ -40,7 +40,7 @@ def getCard(**kwargs):
                         type='treemap',
                     ),
                     pos31=myBuilder.makeGraph(
-                        df=description,
+                        df=description.iloc[:30],
                         x='palabra',
                         y='frecuencia',
                         id_k='pieGph04',

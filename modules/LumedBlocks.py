@@ -7,7 +7,6 @@ import dash_table
 from numpy import character, show_config
 import plotly.express as px
 import pandas as pd
-import requests
 # components maked
 #from modules.dataframes import info_df
 import plotly.graph_objects as go
