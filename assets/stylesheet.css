@@ -1,0 +1,22 @@
+body {
+    background: #e5ebf0;
+    margin-top: 20px;
+}
+ 
+
+.card-text {
+    height: 100px;
+}
+
+.dash-cell {
+    background: rgb(114, 146, 125);
+}
+
+.mytitle {
+    font-size: 20px;
+}
+
+.texto {
+    margin-bottom: -10px;
+}
+
