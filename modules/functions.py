@@ -13,26 +13,24 @@ importante usar la posicion para las condiciones
 
 def getCard(**kwargs):
 
-    df=kwargs['data'][0]
-    salary=kwargs['data'][1]
-    keyword=kwargs['data'][2]
-    description=kwargs['data'][3]
+    df=kwargs['df'][0]
+    tocken=kwargs['df'][1]
 
     cards = myBuilder.GphCards(
                     pos11=myBuilder.makeTopCard(
-                        text_k='Salario en:',
-                        value_k=keyword.replace('+',' '),
+                        text_k='costo de hotel en:',
+                        value_k='pendiente'
                         ),
                     pos12=myBuilder.makeTopCard(
-                        text_k='Salario mínimo',
-                        value_k=int(salary['minimo']),
+                        text_k='mínimo',
+                        value_k='pendiente'
                         ),
                     pos13=myBuilder.makeTopCard(
-                        text_k='Salario máximo',
-                        value_k=int(salary['maximo']),
+                        text_k='máximo',
+                        value_k='pendiente'
                         ),
                     pos21=myBuilder.makeGraph(
-                        df=df,
+                        df=tocken,
                         x='palabra',
                         y='frecuencia',
                         id_k='pieGph03',
@@ -40,12 +38,20 @@ def getCard(**kwargs):
                         type='treemap',
                     ),
                     pos31=myBuilder.makeGraph(
-                        df=description.iloc[:30],
+                        df=tocken,
                         x='palabra',
                         y='frecuencia',
                         id_k='pieGph04',
                         id_K='PieGph04',
                         type='cloudword',
+                    ),
+                    pos41=myBuilder.makeGraph(
+                        df=df,
+                        x='sentimiento',
+                        y='num',
+                        id_k='pieGph05',
+                        id_K='PieGph05',
+                        type='pie',
                     ),
                     id_k='mycardIntClinic',
                     id_K='MyCardOutClinic',

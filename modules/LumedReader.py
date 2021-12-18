@@ -13,6 +13,9 @@ import snscrape.modules.twitter as sntwitter
 import pandas as pd
 import itertools
 import nltk
+from azure.ai.textanalytics import TextAnalyticsClient
+from azure.core.credentials import AzureKeyCredential
+from deep_translator import GoogleTranslator
 
 class apiReader:
     def __init__(self):
@@ -21,8 +24,13 @@ class apiReader:
         '''
         self.header = {'Content-type': 'text/json',
                         'Accept': 'text/plain'}
+
+        self.endpoint= 'https://sentimentanalysis21.cognitiveservices.azure.com/'
+        self.key= '6e420ea37f7c45eb97ac09a23856e17b'
+
         self.ACCESS_KEY ='1ff453cc42278d0985d675b52f8906c5'
         self.GEOAPI = f'http://api.positionstack.com/v1/forward?access_key={self.ACCESS_KEY}&query='
+
         self.pattern = r'''(?x)          # set flag to allow verbose regexps
             (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
           | \w+(?:-\w+)*        # words with optional internal hyphens
@@ -30,7 +38,10 @@ class apiReader:
           | \.\.\.              # ellipsis
           | [][.,;"'?():_`-]    # these are separate tokens; includes ], [
           '''
-        self.stopwords = pd.read_csv('stopwords_es.csv')['STOPWORD'].tolist()+['https','http']
+        self.stopwords = pd.read_csv('stopwords_es.csv')['STOPWORD'].tolist()+['https','http','have','will','your']
+        self.listoftags=[
+            '#travelmexico','#mexicolindo', '#VISITMEXICO','#travelphotography','#vacation'
+        ]
 
     def getData(self, **kwargs):
         '''
@@ -38,20 +49,37 @@ class apiReader:
         '''
         try:
             loc=kwargs['loc']
-            keyword=kwargs['keyword'].replace('+',' ')
+            keyword=kwargs['keyword']#.replace('%20',' AND ').replace('AND Developer','')
 
-            self.stopwords.append(keyword)
+            #self.stopwords.append(keyword)
             query = keyword+' '+f'since:{kwargs["start"]} until:{kwargs["end"]} geocode:'+'"{}"'
 
             df = pd.DataFrame(
                 itertools.islice(
                     sntwitter.TwitterSearchScraper(
                         query.format(loc)
-                        ).get_items(), 500))
-            df=self.mytokenize(df=df['content'])
-            return df
+                        ).get_items(), 30))
+            
+            text_analytics_client = TextAnalyticsClient(endpoint=self.endpoint, credential=AzureKeyCredential(self.key))
+            documents = [ GoogleTranslator(source='auto', target='en').translate(coment) for coment in df['content']]
+            result = [text_analytics_client.analyze_sentiment([document], show_opinion_mining=True)[0] for document in documents]
+            sentimiento=[]
+            seguridad=[]
+            for doc in result:
+                try:
+                    sentimiento.append(doc.sentiment)
+                    seguridad.append(doc.confidence_scores[doc.sentiment])
+                except:
+                    sentimiento.append('error')
+                    seguridad.append(0)
+
+            df['sentimiento']=sentimiento
+            df['seguridad']=seguridad
+            df = df[['date', 'content','sentimiento','seguridad']]        
+            tokens=self.mytokenize(df=df['content'])
+            return [df,tokens]
         except Exception as ex:
-            pass
+            print(ex)
     
     def mytokenize(self, **kwargs):
         '''
@@ -99,10 +127,10 @@ class apiReader:
 
     def getApi(self,**kwargs):
         try:
-            keyword=kwargs['keyword']
+            keyword=kwargs['keyword'].replace('%20','+')
             s = Session()
             ##print(apiSearchCP+self.id_patient)
-            req = Request('GET', f'https://sandbox.getonbrd.dev/api/v0/search/jobs?query={keyword}',
+            req = Request('GET', f'https://www.getonbrd.com/api/v0/search/jobs?query={keyword}',
                 headers=self.header
             )
             prepped = req.prepare()
@@ -114,6 +142,7 @@ class apiReader:
             salary = []
             for i in range(len(my_json['data'])-1):
                 if True:#(my_json['data'][i+1]['attributes']['country'] == kwargs['country'] or my_json['data'][i+1]['attributes']['country'] == 'Remote') and my_json['data'][i+1]['attributes']['category_name'] == kwargs['keyword'].replace('+',' '):
+                #if (my_json['data'][i+1]['attributes']['country'] == kwargs['country'] or my_json['data'][i+1]['attributes']['country'] == 'Remote') and my_json['data'][i+1]['attributes']['category_name'] == kwargs['keyword'].replace('+',' '):
                     salary.append([my_json['data'][i+1]['attributes']['min_salary'],my_json['data'][i+1]['attributes']['max_salary']])
                     description.append(my_json['data'][i+1]['attributes']['description'])
                     description.append(my_json['data'][i+1]['attributes']['projects'])

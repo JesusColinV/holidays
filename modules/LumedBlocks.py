@@ -212,8 +212,8 @@ class BuilderDash():
          
         try:
             if kwargs['type'] == 'pie':
-                dataTable=kwargs['dataTable'].groupby(["sentimiento"]).size().reset_index(name="num")
-                fig=px.pie(dataTable,values='num', names='sentimiento', title='Analisis de comentarios')
+                dataTable=kwargs['df'].groupby([kwargs['x']]).size().reset_index(name=kwargs['y'])
+                fig=px.pie(dataTable,values=kwargs['y'], names=kwargs['x'], title='Analisis de comentarios')
                 fig.update_traces(textposition='inside', textfont_size=14)
             elif kwargs['type'] == 'treemap': # This function is not universal
                 fig = px.treemap(kwargs['df'], path=[kwargs['x']], values=kwargs['y'])
@@ -232,7 +232,10 @@ class BuilderDash():
                 words =  kwargs['df']['palabra'].tolist()
                 frequency = kwargs['df']['frecuencia'].tolist()
                 lower, upper = 15, 45
-                frequency = [((x - min(frequency)) / (max(frequency) - min(frequency))) * (upper - lower) + lower for x in frequency]
+                try:
+                    frequency = [((x - min(frequency)) / (max(frequency) - min(frequency))) * (upper - lower) + lower for x in frequency]
+                except:
+                    frequency=0
 
 
                 #percent = [0.362086258776329, 0.13139418254764293, 0.11802072885322636, 0.055834169174189235, 0.041123370110330994, 0.03978602474088933, 0.02774991641591441, 0.02139752591106653, 0.01905717151454363, 0.015379471748579069, 0.01471079906385824, 0.013373453694416584, 0.012370444667335341, 0.010364426613172852, 0.009695753928452023, 0.009695753928452023, 0.009361417586091608, 0.008692744901370779, 0.008358408559010365, 0.0076897358742895345, 0.0076897358742895345, 0.00735539953192912, 0.007021063189568706, 0.006352390504847877, 0.006018054162487462, 0.006018054162487462, 0.006018054162487462, 0.006018054162487462, 0.006018054162487462, 0.0056837178201270475, 0.005015045135406218, 0.005015045135406218, 0.005015045135406218, 0.005015045135406218, 0.004680708793045804, 0.004680708793045804, 0.0043463724506853894, 0.0043463724506853894, 0.0043463724506853894, 0.0043463724506853894, 0.0043463724506853894, 0.0043463724506853894, 0.004012036108324975, 0.004012036108324975, 0.00367769976596456, 0.00367769976596456, 0.00367769976596456, 0.00367769976596456, 0.003343363423604146, 0.003343363423604146, 0.003343363423604146, 0.003343363423604146, 0.003343363423604146, 0.003343363423604146]
@@ -323,6 +326,11 @@ class BuilderDash():
                 dbc.Row(
                     [
                         dbc.Col(kwargs['pos31']),
+                    ],className=f"{kwargs['id_k']}",),
+                html.P(),
+                dbc.Row(
+                    [
+                        dbc.Col(kwargs['pos41']),
                     ],className=f"{kwargs['id_k']}",),
             ], className=f"{kwargs['class_k']}", id=f"{kwargs['id_K']}"
         )

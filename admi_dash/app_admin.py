@@ -17,7 +17,7 @@ from modules.configurations import configurationsTabs
 
 
 components = configurationsTabs().components
-menus=['Web','Base de datos']
+menus=['Tweets','Palabras']
 myReader = apiReader()
 myDrawer = stetic()
 myBuilder = BuilderDash()
@@ -44,6 +44,8 @@ app.layout= html.Div([
                             html.P('Filtrar', style=myDrawer.TitleTextCardFilterDate, className='mytitle texto'),
                             html.P('Fecha', style=myDrawer.TitleTextCardFilterDate, className='texto'),
                             myBuilder.makeDatePiker(id_k='my-date-picker-range',text='Fecha'),
+                            dbc.Input(id="input-text", placeholder="Busca tu preferencia", type="text"),
+                            myBuilder.make_btn(title_k='Buscar',class_k=f'myBtnBuscar mt-3',id_k=f'MyBtnBuscar'),
                             html.Div(
                                 id='menusFilter', 
                                 className='MenusFilter',
@@ -103,25 +105,29 @@ app.layout= html.Div([
     myDrawer.chooseOutputs(components=components), # componente que despliega los datos
     [Input('my-date-picker-range', 'start_date'), # variables de entrada
      Input('my-date-picker-range', 'end_date'),
-     Input('url', 'pathname')])
-def update_piker(start_date, end_date, pathname):
+     Input("input-text","value"),
+     Input('MyBtnBuscar',"n_clicks"),
+     Input('url', 'pathname')],
+     prevent_initial_call=True,)
+def update_piker(start_date, end_date,value,n_clicks, pathname):
     '''
     This is the first input function, it is responsible for generating the information and consulting the data to be used in the rest of the program, 
     from two acquired dates, it generates a series of menus with the data extracted from the APIs, they are called in the function getData() linea 117
     '''
     try:
         mytabs=[]
-        global data # contiene tanto los datos unicos por paciente como la tabla
-        if pathname == '/': #posteriomente lo validamos
+        global df # contiene tanto los datos unicos por paciente como la tabla
+        if value == None or n_clicks != 1: #posteriomente lo validamos
+            n_clicks=None
             return tuple([[html.P(),dbc.Alert("No hay información por mostrar, completa el menú de filtros", color="primary")]])
         else:
-            country=pathname.split('/')[-2]
-            keyword=pathname.split('/')[-1]
+            n_clicks=None
             # obtenemos las coordenadas dando pais
-            loc= myReader.getCoordinates(country=country)
-            df= myReader.getData(loc=loc, keyword=keyword, start=start_date, end=end_date)
-            salary,description= myReader.getApi(keyword=keyword,country=country)
-            data=[df,salary,keyword,description]
+            #loc= myReader.getCoordinates(country=country)
+            loc = '19.2538495, -99.6452721, 700km'
+            df= myReader.getData(loc=loc, keyword=value, start=start_date, end=end_date)
+            #salary,description= myReader.getApi(keyword=keyword,country=country)
+            #data=[df,salary,keyword,description]
             
             
         
@@ -130,7 +136,7 @@ def update_piker(start_date, end_date, pathname):
             if i.component_id == ids[0]:
                 mytabs.append(
                     getCard(
-                        data=data
+                        df=df
                         )
                 )
             else:
@@ -149,7 +155,7 @@ def update_piker(start_date, end_date, pathname):
     prevent_initial_call=True,)
 def funcRegistro(n_clicks):
     ''' This function detects when clicking, to activate the csv file download item '''
-    file = dcc.send_data_frame(data[1].to_excel, "Datoss.csv")
+    file = dcc.send_data_frame(df[0][['content','sentimiento','seguridad']].to_excel, "tweets.csv")
     return file
 
 # Requests
@@ -159,5 +165,5 @@ def funcRegistro(n_clicks):
     prevent_initial_call=True,)
 def funcRegistro2(n_clicks):
     ''' This function detects when clicking, to activate the csv file download item '''
-    file = dcc.send_data_frame(data[3].to_excel, "Datoss.csv")
+    file = dcc.send_data_frame(df[1].to_excel, "words.csv")
     return file
